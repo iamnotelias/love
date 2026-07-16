@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Beautiful Natalie</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #ffeef2 0%, #ffd1dc 100%);
+            --primary-pink: #ff4b6b;
+            --deep-rose: #c9183b;
+            --text-color: #3d1c24;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 15px;
+        }
+
+        /* Ambient subtle floating hearts */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glassmorphism Card Container */
+        .card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 28px;
+            padding: 35px 25px;
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 25px 50px rgba(199, 24, 59, 0.15);
+            text-align: center;
+            z-index: 10;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInCard 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeInCard {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Upgraded Flower Bouquet Canvas Frame */
+        .bouquet-container {
+            width: 100%;
+            height: 340px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Love Letter Style */
+        h1 {
+            font-size: 1.6rem;
+            color: var(--deep-rose);
+            margin-bottom: 15px;
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+
+        .message-box {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            min-height: 190px;
+            text-align: left;
+            margin-bottom: 25px;
+            padding: 0 5px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.1rem;
+            background-color: var(--deep-rose);
+            margin-left: 3px;
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* Action Button */
+        .bloom-btn {
+            background: linear-gradient(135deg, var(--primary-pink) 0%, var(--deep-rose) 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-family: 'Georgia', serif;
+            font-size: 1.05rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(201, 24, 59, 0.35);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .bloom-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 12px 25px rgba(201, 24, 59, 0.45);
+        }
+
+        .bloom-btn:active {
+            transform: scale(0.98) translateY(1px);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-bg" id="ambientBg"></div>
+
+    <!-- Native Audio Element: Ensure your MP3 file is placed in the same folder and named music.mp3 -->
+    <audio id="loveSong">
+        <source src="music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div class="card">
+        <div class="bouquet-container">
+            <canvas id="bouquetCanvas"></canvas>
+        </div>
+        
+        <h1 id="title">For Natalie, My Adorable One</h1>
+        
+        <div class="message-box">
+            <span id="typedText"></span><span class="cursor" id="cursor"></span>
+        </div>
+
+        <button class="bloom-btn" id="startBtn">Open with Love</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('bouquetCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const typedTextEl = document.getElementById('typedText');
+        const cursor = document.getElementById('cursor');
+        const song = document.getElementById('loveSong');
+
+        // High-res retina canvas support
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+
+        const msg = "Hey babe,\n\nSometimes things are tough, others easy and smooth... I promise I will be with you during the highs and the lows.\n\nI love you so much and I will never let anyone hurt you. You are so adorable, so beautiful and unmatched.\n\nEverything came along unexpectedly and out of the blue. That was the best feeling everrr, you are the best. ❤️";
+
+        // Soft drifting background
+        function createParticle() {
+            const ambient = document.getElementById('ambientBg');
+            const element = document.createElement('div');
+            element.innerHTML = Math.random() > 0.5 ? '❤️' : '🌸';
+            element.style.position = 'absolute';
+            element.style.left = Math.random() * 100 + 'vw';
+            element.style.top = '100vh';
+            element.style.fontSize = (Math.random() * 12 + 12) + 'px';
+            element.style.opacity = Math.random() * 0.3 + 0.15;
+            element.style.pointerEvents = 'none';
+            element.style.transition = 'transform 7s linear, opacity 7s linear';
+            
+            ambient.appendChild(element);
+
+            setTimeout(() => {
+                element.style.transform = `translateY(-115vh) translateX(${Math.random() * 60 - 30}px) rotate(${Math.random() * 360}deg)`;
+            }, 50);
+
+            setTimeout(() => { element.remove(); }, 7000);
+        }
+        setInterval(createParticle, 900);
+
+        // Highly Realistic Canvas Flower Drawing
+        let flowers = [];
+
+        class AdvancedFlower {
+            constructor(x, y, targetSize, type, delay) {
+                this.x = x;
+                this.y = y;
+                this.targetSize = targetSize;
+                this.currentSize = 0;
+                this.type = type; // 'crimson-rose', 'sunset-rose', 'royal-tulip'
+                this.delay = delay;
+                this.growthSpeed = Math.random() * 0.3 + 0.35;
+                this.rotation = Math.random() * Math.PI * 2;
+            }
+
+            draw() {
+                if (this.delay > 0) {
+                    this.delay--;
+                    return;
+                }
+                if (this.currentSize < this.targetSize) {
+                    this.currentSize += this.growthSpeed;
+                }
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                if (this.type === 'crimson-rose' || this.type === 'sunset-rose') {
+                    // Upgraded layered rose structure
+                    const baseColor = this.type === 'crimson-rose' ? '#A3001C' : '#E03B5C';
+                    const midColor = this.type === 'crimson-rose' ? '#D61C3C' : '#F76B8A';
+                    const lightColor = this.type === 'crimson-rose' ? '#FF5C77' : '#FFA8BA';
+
+                    // Layer 1: Base petals (outer structure)
+                    ctx.fillStyle = baseColor;
+                    for (let i = 0; i < 8; i++) {
+                        ctx.beginPath();
+                        ctx.ellipse(0, -this.currentSize * 0.6, this.currentSize * 0.5, this.currentSize * 0.75, 0.2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.rotate(Math.PI / 4);
+                    }
+
+                    // Layer 2: Middle overlapping details
+                    ctx.fillStyle = midColor;
+                    for (let i = 0; i < 6; i++) {
+                        ctx.beginPath();
+                        ctx.ellipse(0, -this.currentSize * 0.45, this.currentSize * 0.4, this.currentSize * 0.55, -0.1, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.rotate(Math.PI / 3);
+                    }
+
+                    // Layer 3: Highlighting layers
+                    ctx.fillStyle = lightColor;
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.ellipse(0, -this.currentSize * 0.3, this.currentSize * 0.25, this.currentSize * 0.4, 0.1, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.rotate((Math.PI * 2) / 5);
+                    }
+
+                    // Center tight bud
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.currentSize * 0.2, 0, Math.PI * 2);
+                    ctx.fillStyle = this.type === 'crimson-rose' ? '#61000E' : '#9E1E38';
+                    ctx.fill();
+
+                } else if (this.type === 'royal-tulip') {
+                    // Tulip petals with elegant curvature and soft gradient shading
+                    ctx.fillStyle = '#6D214F'; // Deep purple base
+
+                    // Left petal shadow
+                    ctx.beginPath();
+                    ctx.ellipse(-this.currentSize * 0.28, -this.currentSize * 0.35, this.currentSize * 0.25, this.currentSize * 0.8, -0.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Right petal shadow
+                    ctx.beginPath();
+                    ctx.ellipse(this.currentSize * 0.28, -this.currentSize * 0.35, this.currentSize * 0.25, this.currentSize * 0.8, 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Soft light purple overlay
+                    ctx.fillStyle = '#8B3A8B'; 
+                    ctx.beginPath();
+                    ctx.ellipse(-this.currentSize * 0.15, -this.currentSize * 0.35, this.currentSize * 0.22, this.currentSize * 0.78, -0.1, 0, Math.PI * 2);
+                    ctx.ellipse(this.currentSize * 0.15, -this.currentSize * 0.35, this.currentSize * 0.22, this.currentSize * 0.78, 0.1, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Lighter centerpiece petal wrapping it up
+                    ctx.fillStyle = '#C15C9C';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -this.currentSize * 0.4, this.currentSize * 0.3, this.currentSize * 0.82, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        function initBouquet() {
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2 + 10;
+            flowers = [];
+
+            // Dense, organic bouquet blueprint
+            const layout = [
+                {x: 0, y: -25, r: 27, type: 'crimson-rose'},    // Central Rose
+                {x: -40, y: -50, r: 23, type: 'sunset-rose'},   // Soft pink top-left
+                {x: 40, y: -50, r: 23, type: 'sunset-rose'},    // Soft pink top-right
+                {x: -55, y: 10, r: 23, type: 'royal-tulip'},    // Tulip mid-left
+                {x: 55, y: 10, r: 23, type: 'royal-tulip'},     // Tulip mid-right
+                {x: -25, y: 35, r: 26, type: 'crimson-rose'},   // Dark red low-left
+                {x: 25, y: 35, r: 25, type: 'sunset-rose'},     // Soft pink low-right
+                {x: 0, y: -80, r: 21, type: 'royal-tulip'},     // Tulip crowning top
+                {x: -45, y: -20, r: 18, type: 'royal-tulip'},   // Extra filling tulip
+                {x: 45, y: -20, r: 18, type: 'royal-tulip'}     // Extra filling tulip
+            ];
+
+            layout.forEach((pos, index) => {
+                flowers.push(new AdvancedFlower(centerX + pos.x, centerY + pos.y, pos.r, pos.type, index * 10));
+            });
+        }
+
+        function drawStemsAndRibbon() {
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2 + 10;
+
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#1e3f20'; // Realistic dark organic stem color
+
+            // Realistic bunching stems
+            for (let i = -25; i <= 25; i += 12.5) {
+                ctx.beginPath();
+                ctx.moveTo(centerX + i, centerY + 10);
+                ctx.quadraticCurveTo(centerX + (i/3), centerY + 65, centerX - (i/2), centerY + 130);
+                ctx.stroke();
+            }
+
+            // Elegant Silk Satin Ribbon
+            ctx.fillStyle = '#ff4b6b';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY + 65, 14, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#ff4b6b';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY + 65);
+            ctx.quadraticCurveTo(centerX - 30, centerY + 95, centerX - 25, centerY + 115);
+            ctx.moveTo(centerX, centerY + 65);
+            ctx.quadraticCurveTo(centerX + 30, centerY + 95, centerX + 25, centerY + 115);
+            ctx.stroke();
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, rect.width, rect.height);
+            drawStemsAndRibbon();
+            flowers.forEach(f => f.draw());
+            requestAnimationFrame(animate);
+        }
+
+        // Typewriter Sequence
+        let charIndex = 0;
+        function typeMessage() {
+            if (charIndex < msg.length) {
+                const char = msg.charAt(charIndex);
+                if (char === '\n') {
+                    typedTextEl.innerHTML += '<br>';
+                } else {
+                    typedTextEl.innerHTML += char;
+                }
+                charIndex++;
+                setTimeout(typeMessage, 50); // Flowing reading pace
+            } else {
+                cursor.style.display = 'none';
+            }
+        }
+
+        // Action Trigger
+        startBtn.addEventListener('click', () => {
+            startBtn.classList.add('hidden');
+            
+            // 100% Reliable Native Audio Activation:
+            // Starts right at the final peak section of "Those Eyes" (~2m 38s / 158s)
+            song.currentTime = 158;
+            song.play().catch(e => {
+                console.log("Audio playback was blocked or failed: ", e);
+            });
+
+            initBouquet();
+            animate();
+            setTimeout(typeMessage, 600);
+        });
+
+        // Initialize background frame
+        drawStemsAndRibbon();
+    </script>
+</body>
+</html>
