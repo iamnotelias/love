@@ -145,9 +145,9 @@
 
     <div class="ambient-bg" id="ambientBg"></div>
 
-    <!-- Native Audio Element: Ensure your MP3 file is placed in the same folder and named music.mp3 -->
+    <!-- Native Audio Element: Using the included file in the repo -->
     <audio id="loveSong">
-        <source src="music.mp3" type="audio/mpeg">
+        <source src="New West - Those Eyes.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
@@ -173,15 +173,31 @@
         const cursor = document.getElementById('cursor');
         const song = document.getElementById('loveSong');
 
-        // High-res retina canvas support
+        // High-res retina canvas support and responsive resize
         const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
+        function resizeCanvas() {
+            const w = canvas.clientWidth || canvas.parentElement.clientWidth;
+            const h = canvas.clientHeight || canvas.parentElement.clientHeight;
+            canvas.width = Math.max(1, Math.floor(w * dpr));
+            canvas.height = Math.max(1, Math.floor(h * dpr));
+            // Reset transform so drawing works with devicePixelRatio
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+        resizeCanvas();
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+        });
 
-        const msg = "Hey babe,\n\nSometimes things are tough, others easy and smooth... I promise I will be with you during the highs and the lows.\n\nI love you so much and I will never let anyone hurt you. \n 
-            "You are so adorable, so beautiful so pretty, your eyes light up every room you walk into.\n\n Time flies and I will always choose you Pookie. You are the best girlfriend someone could ever ask for🥺\n Lots and lots of love ❤️";
+        // A heartfelt, natural-sounding message (single variable)
+        const msg = `Hey love,
+
+I don't say it enough in words, but I notice everything about you — how your smile softens the room, how your laugh makes my day lighter, and how kind you are even when you're tired. You make ordinary moments feel like little miracles.
+
+I promise I'll be there for the silly mornings, the quiet nights, and the messy in-between. I'll hold your hand through the storms and cheer the loudest when things go well.
+
+You are my favorite person to be with. I love you deeply, fiercely, and gently. Always.
+
+— Yours, forever.`;
 
         // Soft drifting background
         function createParticle() {
@@ -306,8 +322,8 @@
         }
 
         function initBouquet() {
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2 + 10;
+            const centerX = canvas.clientWidth / 2;
+            const centerY = canvas.clientHeight / 2 + 10;
             flowers = [];
 
             // Dense, organic bouquet blueprint
@@ -330,8 +346,8 @@
         }
 
         function drawStemsAndRibbon() {
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2 + 10;
+            const centerX = canvas.clientWidth / 2;
+            const centerY = canvas.clientHeight / 2 + 10;
 
             ctx.lineWidth = 3.5;
             ctx.strokeStyle = '#1e3f20'; // Realistic dark organic stem color
@@ -361,7 +377,8 @@
         }
 
         function animate() {
-            ctx.clearRect(0, 0, rect.width, rect.height);
+            // Clear using CSS pixels
+            ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
             drawStemsAndRibbon();
             flowers.forEach(f => f.draw());
             requestAnimationFrame(animate);
@@ -375,10 +392,13 @@
                 if (char === '\n') {
                     typedTextEl.innerHTML += '<br>';
                 } else {
-                    typedTextEl.innerHTML += char;
+                    // escape HTML just in case
+                    const span = document.createElement('span');
+                    span.textContent = char;
+                    typedTextEl.appendChild(span);
                 }
                 charIndex++;
-                setTimeout(typeMessage, 50); // Flowing reading pace
+                setTimeout(typeMessage, 45); // Flowing reading pace
             } else {
                 cursor.style.display = 'none';
             }
@@ -387,20 +407,46 @@
         // Action Trigger
         startBtn.addEventListener('click', () => {
             startBtn.classList.add('hidden');
-            
-            // 100% Reliable Native Audio Activation:
-            // Starts right at the final peak section of "Those Eyes" (~2m 38s / 158s)
-            song.currentTime = 158;
-            song.play().catch(e => {
-                console.log("Audio playback was blocked or failed: ", e);
-            });
 
+            // Initialize visuals immediately
+            resizeCanvas();
             initBouquet();
             animate();
             setTimeout(typeMessage, 600);
+
+            // Robust audio start: set desired start time after metadata loads if necessary
+            const preferredStart = 158; // seconds (approximate peak)
+
+            const tryPlayFrom = () => {
+                try {
+                    // If duration is available, clamp to duration
+                    if (!isNaN(song.duration)) {
+                        song.currentTime = Math.min(preferredStart, song.duration - 0.1);
+                    } else {
+                        song.currentTime = preferredStart;
+                    }
+                } catch (err) {
+                    // Some browsers may reject setting currentTime until metadata is loaded; ignore and proceed to play
+                    console.log('Could not set currentTime yet:', err);
+                }
+
+                song.play().catch(e => {
+                    console.log('Audio playback was blocked or failed:', e);
+                });
+            };
+
+            if (song.readyState >= 2 || !isNaN(song.duration)) {
+                tryPlayFrom();
+            } else {
+                // Wait for metadata then play
+                song.addEventListener('loadedmetadata', tryPlayFrom, { once: true });
+                song.load();
+            }
         });
 
-        // Initialize background frame
+        // Initialize background frame once so page doesn't look empty before pressing
+        // (Canvas will be redrawn after pressing 'Open with Love')
+        resizeCanvas();
         drawStemsAndRibbon();
     </script>
 </body>
